@@ -1,56 +1,56 @@
 # OnboardBot
 
-RAG-based onboarding assistant that answers questions about a LangChain codebase using its documentation as the knowledge source. Built with LangChain + TypeScript.
+Hola hola. OnboardBot es un agente RAG conversacional que responde preguntas sobre un codebase usando su propia documentación como fuente de verdad. Hecho con **LangChain + TypeScript**.
 
-Final deliverable for **Path Code - Academia Lab 10**, Module 06.
+Entregable final para **Path Code — Academia Lab 10**, Módulo 06.
 
-## Problem
+## Qué problema resuelve
 
-When a new developer joins a repo, they lose days reading README, ADRs, structure, and conventions. The same questions come up every time: "how do I add a new tool?", "what does this file do?", "how do I set up the environment?". OnboardBot answers those questions grounded in the repo's own docs, with citations — and refuses to answer when the info isn't there.
+Cuando un dev nuevo se suma a un repo se le van días leyendo README, ADRs, estructura y convenciones. Las preguntas son siempre las mismas: "¿cómo agrego una tool?", "¿qué hace este archivo?", "¿cómo configuro el entorno?". OnboardBot responde esas preguntas anclado a los documentos reales del proyecto, con citas — y se niega cuando la info no está. Eso último es importante: si algo no está documentado, lo dice. No inventa.
 
-## Features
+## Qué hace
 
-- **CLI-based** interactive REPL (no web UI, keeps scope tight).
-- **RAG pipeline** over Markdown docs of a target repo (local HNSWLib vector store, no external infra).
-- **Three production-grade guardrails** (see `docs/guardrails.md`):
-  1. Anti-hallucination — answers must be grounded in retrieved context or refuse.
-  2. Anti-prompt-injection — input validation against known manipulation patterns.
-  3. Scope lock — only answers about the loaded corpus; off-topic queries are redirected.
-- **Cited sources** on every answer (file name + chunk).
-- **Spanish responses** by default (matches the audience).
+- **CLI interactiva** (REPL en consola, sin UI web — me mantengo enfocado en el agente).
+- **Pipeline RAG** sobre los `.md` de cualquier repo, con vector store local en HNSWLib (cero infra externa).
+- **Tres guardrails de verdad** (no solo en el prompt — código imperativo con tests). Detalle completo en `docs/guardrails.md`:
+  1. **Anti-prompt-injection**: valida la entrada con regex en ES/EN antes de tocar el LLM.
+  2. **Anti-alucinación**: si la respuesta no cita fuentes del corpus recuperado, la reemplaza por texto predefinido.
+  3. **Scope-lock**: si el retrieval no alcanza el umbral mínimo, el agente se niega antes de llamar al modelo.
+- **Citas siempre** al final de cada afirmación (`[fuente: archivo.md]`).
+- **Responde en español** por defecto.
 
-## Requirements
+## Requisitos
 
 - Node.js 20+
 - npm 10+
-- OpenRouter API key (for the LLM)
-- OpenAI API key (for embeddings) — or any embedding provider you wire in
+- API key de OpenRouter (para el LLM)
+- API key de OpenAI (para los embeddings)
 
-## Install
+## Instalación
 
 ```bash
 npm install
 cp env.example .env
-# Edit .env and add your keys
+# Editá .env y poné tus claves
 ```
 
-## Usage
+## Uso
 
-**1. Build the index** from a target repo's docs:
+**1. Construí el índice** apuntando a un repo cualquiera:
 
 ```bash
 npm run ingest -- ../10X-Builders-langchain-agent
 ```
 
-This reads all `.md` files under the given path (excluding `node_modules`), chunks them, embeds them, and persists the vector store to `.index/`.
+Esto lee todos los `.md` del path (excluyendo `node_modules`, `dist`, `.git`, etc.), los chunkea, los embeddea y persiste el vector store en `.index/`.
 
-**2. Start the interactive CLI**:
+**2. Levantá la CLI**:
 
 ```bash
 npm run dev
 ```
 
-Then ask questions:
+Y preguntale lo que quieras del repo:
 
 ```
 > ¿Cómo agrego una nueva tool al agente?
@@ -58,58 +58,58 @@ Then ask questions:
 > ¿Qué hace runAgent.ts?
 ```
 
-Type `/help` for commands, `/exit` to quit.
+Comandos de la REPL: `/help`, `/sources` (muestra las fuentes de la última respuesta), `/exit`.
 
-## Architecture
+## Arquitectura
 
-See `docs/architecture.md` for the layered design (interface → application → composition → domain → config).
+Diseñado por capas: interface → application → composition → domain → config. El detalle completo (con diagramas y decisiones clave) está en `docs/architecture.md`.
 
 ## Guardrails
 
-See `docs/guardrails.md` for the three guardrails, how they're tested, and what they do NOT cover.
+Cada uno con su lógica, sus tests, y la lista explícita de lo que **no** cubre. Ver `docs/guardrails.md`.
 
-## Project Structure
+## Estructura del proyecto
 
 ```
 onboardbot/
 ├── src/
 │   ├── index.ts                  # CLI entry point
-│   ├── config/env.ts             # Env loading + Zod validation
+│   ├── config/env.ts             # Carga + validación de env con Zod
 │   ├── agent/
-│   │   ├── createAgent.ts        # Composes retriever + LLM + prompt
-│   │   ├── runAgent.ts           # Single-query execution
-│   │   ├── prompt.ts             # System prompt (restrictive)
-│   │   ├── retriever.ts          # Loads vector store, retrieves context
-│   │   └── guardrails/           # Input/output validators
-│   │       ├── inputValidator.ts
-│   │       ├── outputValidator.ts
-│   │       ├── scopeLock.ts
-│   │       └── patterns.ts
-│   └── ingest/buildIndex.ts      # Corpus ingestion pipeline
-├── tests/                        # Vitest tests (guardrails + retrieval)
+│   │   ├── createAgent.ts        # Compone retriever + LLM + prompt + guardrails
+│   │   ├── runAgent.ts           # Wrapper de ejecución
+│   │   ├── prompt.ts             # System prompt restrictivo
+│   │   ├── retriever.ts          # Carga el vector store y trae contexto
+│   │   └── guardrails/
+│   │       ├── inputValidator.ts # G1 — anti-injection
+│   │       ├── outputValidator.ts# G2 — anti-alucinación
+│   │       ├── scopeLock.ts      # G3 — scope semántico
+│   │       └── patterns.ts       # Regex de injection (ES + EN)
+│   └── ingest/buildIndex.ts      # Pipeline de ingesta
+├── tests/                        # Vitest, lógica pura (sin LLM, sin red)
 ├── docs/
-│   ├── brief.md                  # Project brief
-│   ├── plan.md                   # Implementation plan by phases
-│   ├── architecture.md           # Layered architecture
-│   └── guardrails.md             # Guardrails design + test strategy
-└── .index/                       # Persisted vector store (gitignored)
+│   ├── brief.md                  # Brief del proyecto
+│   ├── plan.md                   # Plan por fases
+│   ├── architecture.md           # Arquitectura
+│   └── guardrails.md             # Guardrails: spec + tests + lo que no cubren
+└── .index/                       # Vector store persistido (gitignored)
 ```
 
 ## Scripts
 
-| Script | What it does |
-|--------|--------------|
-| `npm run dev` | Runs the interactive CLI with `tsx` |
-| `npm run ingest -- <path>` | Builds the vector index from a target repo |
-| `npm run build` | Compiles TypeScript to `dist/` |
-| `npm run start` | Runs the compiled build |
-| `npm test` | Runs Vitest once |
-| `npm run typecheck` | Type-checks without emitting |
+| Script | Para qué sirve |
+|--------|----------------|
+| `npm run dev` | Levanta la CLI interactiva con `tsx` |
+| `npm run ingest -- <path>` | Construye el índice del repo objetivo |
+| `npm run build` | Compila a `dist/` |
+| `npm run start` | Corre el build compilado |
+| `npm test` | Corre los tests de Vitest una vez |
+| `npm run typecheck` | Chequeo de tipos sin emitir build |
 
-## Status
+## Estado
 
-Phases 1–4 complete. Guardrails implemented and tested (16 unit tests, logic-only). See `docs/plan.md` for phase-by-phase progress.
+Fases 0 a 5 completas. **16 tests unitarios** verdes (todos lógicos, sin red). Falta solo la fase de demo. Progreso detallado en `docs/plan.md`.
 
-## License
+## Licencia
 
 MIT
