@@ -1,6 +1,6 @@
 # OnboardBot
 
-Hola hola. OnboardBot es un agente RAG conversacional que responde preguntas sobre un codebase usando su propia documentación como fuente de verdad. Hecho con **LangChain + TypeScript**.
+Agente RAG conversacional que responde preguntas sobre un codebase usando su propia documentación como fuente de verdad. Hecho con **LangChain + TypeScript**.
 
 Entregable final para **Path Code — Academia Lab 10**, Módulo 06.
 
