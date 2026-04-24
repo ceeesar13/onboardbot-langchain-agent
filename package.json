@@ -1,0 +1,35 @@
+{
+  "name": "onboardbot",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "RAG-based onboarding assistant for LangChain codebases. Final project for Path Code - Academia Lab 10.",
+  "private": true,
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "ingest": "tsx src/ingest/buildIndex.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@langchain/community": "^0.3.0",
+    "@langchain/core": "^0.3.0",
+    "@langchain/openai": "^0.3.0",
+    "dotenv": "^16.4.5",
+    "hnswlib-node": "^3.0.0",
+    "langchain": "^0.3.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
